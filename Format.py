@@ -290,7 +290,7 @@ class VOC:
                     "objects": obj
                 }
 
-                data[root.find("filename").text.split(".")[0]] = annotation
+                data[filename.split(".")[0]] = annotation
 
                 printProgressBar(progress_cnt + 1, progress_length,
                                  prefix='VOC Parsing:'.ljust(15), suffix='Complete', length=40)
@@ -762,9 +762,10 @@ class YOLO:
                     cls_id = get_class_index(
                         self.cls_list, self.cls_hierarchy, cls_name)
 
-                    bndbox = "".join(["".join([str(e), " "]) for e in bb])
-                    contents = "".join(
-                        [contents, str(cls_id), " ", bndbox[:-1], "\n"])
+                    if cls_id is not None:
+                        bndbox = "".join(["".join([str(e), " "]) for e in bb])
+                        contents = "".join(
+                            [contents, str(cls_id), " ", bndbox[:-1], "\n"])
 
                 result[key] = contents
 
