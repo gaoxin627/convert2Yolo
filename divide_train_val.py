@@ -44,7 +44,7 @@ def divide_train_val_txt(data_file, val_num, train_file, val_file):
 
 
 if __name__ == '__main__':
-    data_file = '/media/gaoxin/DATA/test_data/manifest.txt'
-    train_file = '/media/gaoxin/DATA/test_data/train.txt'
-    val_file = '/media/gaoxin/DATA/test_data/val.txt'
+    data_file = '/media/gaoxin/DATA/data/train_val/sly_dmyw/manifest.txt'
+    train_file = '/media/gaoxin/DATA/data/train_val/sly_dmyw/train.txt'
+    val_file = '/media/gaoxin/DATA/data/train_val/sly_dmyw/val.txt'
     divide_train_val_txt(data_file, 50, train_file, val_file)

@@ -290,7 +290,8 @@ class VOC:
                     "objects": obj
                 }
 
-                data[filename.split(".")[0]] = annotation
+                data[filename[:filename.rfind('.')]] = annotation
+                # data[filename.split(".")[0]] = annotation
 
                 printProgressBar(progress_cnt + 1, progress_length,
                                  prefix='VOC Parsing:'.ljust(15), suffix='Complete', length=40)
@@ -795,6 +796,8 @@ class YOLO:
             printProgressBar(0, progress_length, prefix='\nYOLO Saving:'.ljust(
                 15), suffix='Complete', length=40)
 
+            if not os.path.exists(save_path):
+                os.makedirs(save_path)
             if os.path.isdir(manifest_path):
                 manifest_abspath = os.path.join(manifest_path, "manifest.txt")
             else:
