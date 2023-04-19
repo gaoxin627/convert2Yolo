@@ -232,11 +232,11 @@ class VOC:
             return False, msg
 
     @staticmethod
-    def parse(path):
+    def parse(img_path, label_path):
         try:
 
             (dir_path, dir_names, filenames) = next(
-                os.walk(os.path.abspath(path)))
+                os.walk(os.path.abspath(img_path)))
 
             data = {}
             progress_length = len(filenames)
@@ -245,7 +245,16 @@ class VOC:
                 15), suffix='Complete', length=40)
             for filename in filenames:
 
-                xml = open(os.path.join(dir_path, filename), "r")
+                if not (filename.lower().endswith('jpg') or filename.lower().endswith('png')) :
+                    print(filename)
+                    continue
+
+                label_file = os.path.join(label_path, filename[:-3] + 'xml')
+                if not os.path.exists(label_file):
+                    data[filename[:filename.rfind('.')]] = dict()
+                    continue
+
+                xml = open(label_file, "r")
 
                 tree = Et.parse(xml)
                 root = tree.getroot()
@@ -255,12 +264,11 @@ class VOC:
                     "width": xml_size.find("width").text,
                     "height": xml_size.find("height").text,
                     "depth": xml_size.find("depth").text
-
                 }
 
                 objects = root.findall("object")
-                if len(objects) == 0:
-                    return False, "number object zero"
+                # if len(objects) == 0:
+                #     return False, "number object zero"
 
                 obj = {
                     "num_obj": len(objects)
@@ -609,9 +617,21 @@ class YOLO:
 
     def __init__(self, cls_list_path, cls_hierarchy={}):
         with open(cls_list_path, 'r') as file:
-            l = file.read().splitlines()
+            lines = file.read().splitlines()
 
-        self.cls_list = l
+        class_dict = dict()
+        for line in lines:
+            if ':' in line:
+                label = line.split(':')[0]
+                id = line.split(':')[1]
+                class_dict[label] = id
+
+        if len(class_dict) > 0:
+            self.cls_list = class_dict
+            print(self.cls_list)
+        else:
+            self.cls_list = lines
+
         self.cls_hierarchy = cls_hierarchy
 
     def coordinateCvt2YOLO(self, size, box):
@@ -734,41 +754,50 @@ class YOLO:
             result = {}
 
             for key in data:
-                img_width = int(data[key]["size"]["width"])
-                img_height = int(data[key]["size"]["height"])
+                if len(data[key]) > 0:
+                    img_width = int(data[key]["size"]["width"])
+                    img_height = int(data[key]["size"]["height"])
 
-                contents = ""
+                    contents = ""
 
-                for idx in range(0, int(data[key]["objects"]["num_obj"])):
+                    for idx in range(0, int(data[key]["objects"]["num_obj"])):
 
-                    xmin = data[key]["objects"][str(idx)]["bndbox"]["xmin"]
-                    ymin = data[key]["objects"][str(idx)]["bndbox"]["ymin"]
-                    xmax = data[key]["objects"][str(idx)]["bndbox"]["xmax"]
-                    ymax = data[key]["objects"][str(idx)]["bndbox"]["ymax"]
+                        xmin = data[key]["objects"][str(idx)]["bndbox"]["xmin"]
+                        ymin = data[key]["objects"][str(idx)]["bndbox"]["ymin"]
+                        xmax = data[key]["objects"][str(idx)]["bndbox"]["xmax"]
+                        ymax = data[key]["objects"][str(idx)]["bndbox"]["ymax"]
 
-                    b = (float(xmin), float(xmax), float(ymin), float(ymax))
-                    bb = self.coordinateCvt2YOLO((img_width, img_height), b)
+                        b = (float(xmin), float(xmax), float(ymin), float(ymax))
+                        bb = self.coordinateCvt2YOLO((img_width, img_height), b)
 
-                    cls_name = data[key]["objects"][str(idx)]["name"]
+                        cls_name = data[key]["objects"][str(idx)]["name"]
 
-                    def get_class_index(cls_list, cls_hierarchy, cls_name):
-                        if cls_name in cls_list:
-                            return cls_list.index(cls_name)
+                        def get_class_index(cls_list, cls_hierarchy, cls_name):
+                            if type(cls_list) is dict:
+                                if cls_name in cls_list:
+                                    return cls_list[cls_name]
+                                else:
+                                    return None
 
-                        if type(cls_hierarchy) is dict and cls_name in cls_hierarchy:
-                            return get_class_index(cls_list, cls_hierarchy, cls_hierarchy[cls_name])
+                            if cls_name in cls_list:
+                                return cls_list.index(cls_name)
 
-                        return None
+                            if type(cls_hierarchy) is dict and cls_name in cls_hierarchy:
+                                return get_class_index(cls_list, cls_hierarchy, cls_hierarchy[cls_name])
 
-                    cls_id = get_class_index(
-                        self.cls_list, self.cls_hierarchy, cls_name)
+                            return None
 
-                    if cls_id is not None:
-                        bndbox = "".join(["".join([str(e), " "]) for e in bb])
-                        contents = "".join(
-                            [contents, str(cls_id), " ", bndbox[:-1], "\n"])
+                        cls_id = get_class_index(
+                            self.cls_list, self.cls_hierarchy, cls_name)
 
-                result[key] = contents
+                        if cls_id is not None:
+                            bndbox = "".join(["".join([str(e), " "]) for e in bb])
+                            contents = "".join(
+                                [contents, str(cls_id), " ", bndbox[:-1], "\n"])
+
+                    result[key] = contents
+                else:
+                    result[key] = ''
 
                 printProgressBar(progress_cnt + 1, progress_length, prefix='YOLO Generating:'.ljust(15),
                                  suffix='Complete',

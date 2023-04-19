@@ -33,7 +33,7 @@ def main(config):
         voc = VOC()
         yolo = YOLO(os.path.abspath(config["cls_list"]))
 
-        flag, data = voc.parse(config["label"])
+        flag, data = voc.parse(config['img_path'], config["label"])
 
         if flag == True:
 
