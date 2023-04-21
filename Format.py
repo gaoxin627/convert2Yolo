@@ -251,7 +251,8 @@ class VOC:
 
                 label_file = os.path.join(label_path, filename[:-3] + 'xml')
                 if not os.path.exists(label_file):
-                    data[filename[:filename.rfind('.')]] = dict()
+                    # data[filename[:filename.rfind('.')]] = dict()
+                    data[filename] = dict()
                     continue
 
                 xml = open(label_file, "r")
