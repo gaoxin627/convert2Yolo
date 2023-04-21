@@ -298,8 +298,9 @@ class VOC:
                     "objects": obj
                 }
 
-                data[filename[:filename.rfind('.')]] = annotation
                 # data[filename.split(".")[0]] = annotation
+                # data[filename[:filename.rfind('.')]] = annotation
+                data[filename] = annotation
 
                 printProgressBar(progress_cnt + 1, progress_length,
                                  prefix='VOC Parsing:'.ljust(15), suffix='Complete', length=40)
@@ -834,12 +835,13 @@ class YOLO:
 
             with open(os.path.abspath(manifest_abspath), "w") as manifest_file:
 
-                for key in data:
+                for img_name in data:
+                    key = img_name[:img_name.rfind('.')]
                     manifest_file.write(os.path.abspath(os.path.join(
-                        img_path, "".join([key, img_type, "\n"]))))
+                        img_path, "".join([img_name, "\n"]))))
 
                     with open(os.path.abspath(os.path.join(save_path, "".join([key, ".txt"]))), "w") as output_txt_file:
-                        output_txt_file.write(data[key])
+                        output_txt_file.write(data[img_name])
 
                     printProgressBar(progress_cnt + 1, progress_length, prefix='YOLO Saving:'.ljust(15),
                                      suffix='Complete',
